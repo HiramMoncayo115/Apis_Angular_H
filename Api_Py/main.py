@@ -1,6 +1,9 @@
-from fastapi import FastAPI
-import pypyodbc as odbc 
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from typing import Optional
+from datetime import datetime
 from Conn import get_db_connection
+import pypyodbc
 
 app=FastAPI()
 
@@ -8,10 +11,7 @@ app=FastAPI()
 @app.get("/")  #Realiza conexion a base de datos y trae todos sus registros
 def root():
 
-    connection = get_db_connection()
-
-    #connection = odbc.connect(connection_string)
-    #print("Conexión exitosa!")
+    connection = get_db_connection() #Mandamos a llamar funcion para crear conexion
 
     # Crear un cursor
     cursor = connection.cursor()
@@ -34,10 +34,7 @@ def root():
 @app.get("/get_tasks") #Funcion para obtener todos los registros de la tabla Tasks
 def get_tasks():
 
-    #connection = odbc.connect(connection_string)
-    #print("Conexión exitosa!")
-
-    connection = get_db_connection()
+    connection = get_db_connection() #Mandamos a llamar funcion para crear conexion
 
     cursor = connection.cursor()
     cursor.execute("SELECT * FROM Tasks")
@@ -52,20 +49,33 @@ def get_tasks():
     return records #Regresamos todos los valores que obtenemos de la base de datos
 
 
-#@app.post("/add_task") #Funcion para agregar nuevos registros de task (PENDIENTE SIN TERMINAR)
-#def add_tasks(task:stg=Form(...)):
+class TaskCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    status: str = "Pending"
+    creationDate: Optional[datetime] = None
+    dueDate: Optional[datetime] = None
 
-    #connection = odbc.connect(connection_string)
-    #print("Conexión exitosa!")
+@app.post("/tasks/", response_model=TaskCreate)
+def create_task(task: TaskCreate):
 
-    #cursor = connection.cursor()
-    #cursor.execute("INSERT INTO Tasks (Title, Description, Status, CreationDate, DueDate) VALUES (%s, %s, 'Pending', '2025-03-01 09:00:00', '2025-03-05 17:00:00'),")
-    #records = cursor.fetchall()
+    connection = get_db_connection()
+    cursor = connection.cursor()
 
-    #print(records)
-
-    # Cerrar el cursor y la conexión
-    #cursor.close()
-    #connection.close()
-
-    #return records #Regresamos todos los valores que obtenemos de la base de datos
+    try:
+        query = """
+            INSERT INTO Tasks (Title, Description, Status, CreationDate, DueDate)
+            VALUES (?, ?, ?, ?, ?)
+        """
+        values = (task.title, task.description, task.status, task.creationDate, task.dueDate)
+        cursor.execute(query, values)
+        connection.commit()
+        return task
+    
+    except pypyodbc.Error as e:
+        connection.rollback()
+        raise HTTPException(status_code=500, detail=f"Error al insertar la tarea: {e}")
+    
+    finally:
+        cursor.close()
+        connection.close()
