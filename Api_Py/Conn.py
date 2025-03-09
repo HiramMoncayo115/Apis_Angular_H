@@ -1,6 +1,5 @@
 import pypyodbc as odbc 
 
-
 def get_db_connection():
 
     connection_string = (

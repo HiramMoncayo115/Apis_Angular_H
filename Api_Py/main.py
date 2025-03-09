@@ -1,8 +1,9 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from typing import Optional
-from datetime import datetime
+#from pydantic import BaseModel
+#from typing import Optional
+#from datetime import datetime
 from Conn import get_db_connection
+from Models.Task import TaskCreate
 import pypyodbc
 
 app=FastAPI()
@@ -49,13 +50,6 @@ def get_tasks():
     return records #Regresamos todos los valores que obtenemos de la base de datos
 
 
-class TaskCreate(BaseModel):
-    title: str
-    description: Optional[str] = None
-    status: str = "Pending"
-    creationDate: Optional[datetime] = None
-    dueDate: Optional[datetime] = None
-
 @app.post("/tasks/", response_model=TaskCreate)
 def create_task(task: TaskCreate):
 
@@ -63,10 +57,7 @@ def create_task(task: TaskCreate):
     cursor = connection.cursor()
 
     try:
-        query = """
-            INSERT INTO Tasks (Title, Description, Status, CreationDate, DueDate)
-            VALUES (?, ?, ?, ?, ?)
-        """
+        query = "EXEC InsertTask @Title=?, @Description=?, @Status=?, @CreationDate=?, @DueDate=?"
         values = (task.title, task.description, task.status, task.creationDate, task.dueDate)
         cursor.execute(query, values)
         connection.commit()
@@ -79,3 +70,7 @@ def create_task(task: TaskCreate):
     finally:
         cursor.close()
         connection.close()
+
+
+#Proximos paso es cambiar toda la arquitectura para usar algo parecido como modelo vista controlador para separar la logica que tendremos a las llamadas 
+#a la api y las conexiones a las bases de datos .
