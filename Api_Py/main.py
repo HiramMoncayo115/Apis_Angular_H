@@ -1,9 +1,7 @@
 from fastapi import FastAPI, HTTPException
-#from pydantic import BaseModel
-#from typing import Optional
-#from datetime import datetime
 from Conn import get_db_connection
 from Models.Task import TaskCreate
+from Controllers.ControllerTask import Root
 import pypyodbc
 
 app=FastAPI()
@@ -12,24 +10,28 @@ app=FastAPI()
 @app.get("/")  #Realiza conexion a base de datos y trae todos sus registros
 def root():
 
-    connection = get_db_connection() #Mandamos a llamar funcion para crear conexion
+    #connection = get_db_connection() #Mandamos a llamar funcion para crear conexion
 
     # Crear un cursor
-    cursor = connection.cursor()
+    #cursor = connection.cursor()
 
     # Ejecutar una consulta en base de datos SQL 
-    cursor.execute("SELECT * FROM Tasks")
+    #cursor.execute("SELECT * FROM Tasks")
 
     # Obtener y mostrar los resultados
-    rows = cursor.fetchall()
-    for row in rows:
-        print(row)
+    #rows = cursor.fetchall()
+    #for row in rows:
+        #print(row)
 
     # Cerrar el cursor y la conexión
-    cursor.close()
-    connection.close()
+    #cursor.close()
+    #connection.close()
 
-    return{"message": "Registros en base de datos de tabla Tasks"}
+    Result = Root();
+
+    print(Result)
+
+    return Result
 
 
 @app.get("/get_tasks") #Funcion para obtener todos los registros de la tabla Tasks
