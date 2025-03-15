@@ -1,8 +1,9 @@
 from fastapi import FastAPI, HTTPException
 from Conn import get_db_connection
 from Models.Task import TaskCreate
-from Controllers.ControllerTask import Root
+import Controllers.ControllerTask as ControllerTask
 import pypyodbc
+
 
 app=FastAPI()
 
@@ -10,69 +11,39 @@ app=FastAPI()
 @app.get("/")  #Realiza conexion a base de datos y trae todos sus registros
 def root():
 
-    #connection = get_db_connection() #Mandamos a llamar funcion para crear conexion
-
-    # Crear un cursor
-    #cursor = connection.cursor()
-
-    # Ejecutar una consulta en base de datos SQL 
-    #cursor.execute("SELECT * FROM Tasks")
-
-    # Obtener y mostrar los resultados
-    #rows = cursor.fetchall()
-    #for row in rows:
-        #print(row)
-
-    # Cerrar el cursor y la conexión
-    #cursor.close()
-    #connection.close()
-
-    Result = Root();
-
+    Result = ControllerTask.Root();
     print(Result)
 
-    return Result
+    return "Root succesfully"
 
 
 @app.get("/get_tasks") #Funcion para obtener todos los registros de la tabla Tasks
 def get_tasks():
 
-    connection = get_db_connection() #Mandamos a llamar funcion para crear conexion
-
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM Tasks")
-    records = cursor.fetchall()
-
+    records = ControllerTask.get_tasks();
     print(records)
 
-    # Cerrar el cursor y la conexión
-    cursor.close()
-    connection.close()
-
-    return records #Regresamos todos los valores que obtenemos de la base de datos
+    return "get_tasks" 
 
 
-@app.post("/tasks/", response_model=TaskCreate)
+@app.post("/add_task/", response_model=TaskCreate)
 def create_task(task: TaskCreate):
 
-    connection = get_db_connection()
-    cursor = connection.cursor()
+    Result = ControllerTask.add_Task(task)
 
-    try:
-        query = "EXEC InsertTask @Title=?, @Description=?, @Status=?, @CreationDate=?, @DueDate=?"
-        values = (task.title, task.description, task.status, task.creationDate, task.dueDate)
-        cursor.execute(query, values)
-        connection.commit()
-        return task
-    
-    except pypyodbc.Error as e:
-        connection.rollback()
-        raise HTTPException(status_code=500, detail=f"Error al insertar la tarea: {e}")
-    
-    finally:
-        cursor.close()
-        connection.close()
+    return "Added succesfully"
+
+@app.post("/deleted_task/{task_id}", response_model=TaskCreate)
+def create_task(task_id = int:
+
+    Result = ControllerTask.add_Task(task)
+
+    return "Added succesfully"
 
 
 #Proximos paso es cambiar toda la arquitectura para usar algo parecido como modelo vista controlador para separar la logica que tendremos a las llamadas 
-#a la api y las conexiones a las bases de datos .
+#a la api y las conexiones a las bases de datos . (COMPLETADO)
+
+#Agregar funcion de delet y de update front(En progreso)
+
+#Hacer la comunicacion con la app Agular desde front
