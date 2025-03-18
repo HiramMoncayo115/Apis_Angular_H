@@ -59,3 +59,34 @@ def add_Task(task: TaskCreate): #Funcion para agregar tasks en nuestra base de d
         connection.close()
 
         print("Function add tasks from my controller with SP created in DB")
+
+
+def delete_Task(task_id = int):
+    
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    try:
+
+        query = "EXEC DeleteTask @Id = ?;"
+        values = (task_id,)
+
+        cursor.execute(query, values)
+
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Task no encontrada")
+        
+        connection.commit()
+
+        return {"message": f"Task con Id {task_id} eliminada exitosamente"}
+
+    except pypyodbc.Error as e:
+        connection.rollback()
+        raise HTTPException(status_code=500, detail=f"Error al insertar la tarea: {e}")
+    
+    finally:
+        cursor.close()
+        connection.close()
+
+        print("Function delete tasks from my controller with SP created in DB si aqui")
+
